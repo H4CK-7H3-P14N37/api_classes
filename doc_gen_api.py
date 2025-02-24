@@ -1,3 +1,5 @@
+import os
+import csv
 import lxml
 from docx import Document
 from docx.oxml import ns
@@ -10,8 +12,6 @@ from docx.oxml.ns import qn
 from docx.oxml.ns import nsdecls
 from docx.oxml import parse_xml
 from docx.table import _Cell
-import csv
-# from docx.oxml import OxmlElement
 
 
 class OSSReportGen:
@@ -812,8 +812,7 @@ class OSSReportGen:
         footer = section.footer
         paragraph = footer.paragraphs[0]
         footer_run = paragraph.add_run()
-        footer_run.text = f"\t{reporting_team} | {
-            report_for} {friendly_test_type_name.title()}\t"
+        footer_run.text = f"\t{reporting_team} | {report_for} {friendly_test_type_name.title()}\t"
         footer_run.style = "rt_page_black"
         footer_run.alignment = WD_ALIGN_PARAGRAPH.RIGHT
         self.add_page_number(footer_run)
@@ -905,8 +904,8 @@ class OSSReportGen:
         assessment_info_header.paragraph_format.space_before = Pt(0)
         assessment_info_header.paragraph_format.space_after = Pt(1)
         self.add_line_breaks(table_cell_1, 1)
-        table_cell_1.add_paragraph(f"{reporting_team} conducted a {friendly_test_type_name} for {report_for} from {start_date} to {end_date}. The purpose of this assessment was to evaluate, and test risks associated with {
-            report_for}'s infrastructure by simulating real-world attackers and identifying vulnerabilities.", style='rt_text_black')
+        table_cell_1.add_paragraph(f"""{reporting_team} conducted a {friendly_test_type_name} for {report_for} from {start_date} to {end_date}. The purpose of this assessment was to evaluate, and test risks associated with {
+            report_for}'s infrastructure by simulating real-world attackers and identifying vulnerabilities.""", style='rt_text_black')
         self.add_line_breaks(table_cell_1, 1)
         table_cell_1.add_paragraph('Client Contact:', style='Heading 3')
         table_cell_1.add_paragraph(
@@ -1579,11 +1578,12 @@ class OSSReportGen:
         # SAVE THE DOC
         if ip_strip:
             report_name = report_for.replace(' ', '_').lower()
-            file_name_saved = f"{self.save_dir}{
-                report_name}_exec_{test_type}.docx"
+            report_name = f"{report_name}_exec_{test_type}.docx"
+            file_name_saved = os.path.join({self.save_dir},{report_name})
         else:
             report_name = report_for.replace(' ', '_').lower()
-            file_name_saved = f"{self.save_dir}{report_name}_{test_type}.docx"
+            report_name = f"{report_name}_{test_type}.docx"
+            file_name_saved = os.path.join({self.save_dir},{report_name})
         self.document.save(file_name_saved)
         return file_name_saved
 
