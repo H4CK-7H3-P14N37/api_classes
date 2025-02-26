@@ -1334,7 +1334,7 @@ class OSSReportGen:
                     if risk_data:
                         risk_name_start = "{}{}".format(
                             risk_level[0].upper(), tmp_risk_num)
-                        self.document.add_heading('{} –  {}'.format(
+                        self.document.add_heading('{} -  {}'.format(
                             risk_name_start, risk_name), level=2)
                         self.document.add_paragraph(
                             "_______________________________________________________________________________________________")
@@ -1579,11 +1579,11 @@ class OSSReportGen:
         if ip_strip:
             report_name = report_for.replace(' ', '_').lower()
             report_name = f"{report_name}_exec_{test_type}.docx"
-            file_name_saved = os.path.join({self.save_dir},{report_name})
+            file_name_saved = os.path.join(self.save_dir,report_name)
         else:
             report_name = report_for.replace(' ', '_').lower()
             report_name = f"{report_name}_{test_type}.docx"
-            file_name_saved = os.path.join({self.save_dir},{report_name})
+            file_name_saved = os.path.join(self.save_dir,report_name)
         self.document.save(file_name_saved)
         return file_name_saved
 
