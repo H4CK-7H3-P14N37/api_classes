@@ -1,16 +1,17 @@
+# Standard library imports
 import os
 import csv
+
+# Third-party imports
 import lxml
 from docx import Document
-from docx.oxml import ns
+from docx.oxml import ns, parse_xml
 from docx.oxml.shared import OxmlElement
 from docx.shared import Inches, Pt, RGBColor
-from docx.enum.text import WD_ALIGN_PARAGRAPH, WD_LINE_SPACING, WD_COLOR_INDEX
+from docx.enum.text import WD_ALIGN_PARAGRAPH, WD_LINE_SPACING
 from docx.enum.table import WD_ALIGN_VERTICAL
 from docx.enum.style import WD_STYLE_TYPE
-from docx.oxml.ns import qn
-from docx.oxml.ns import nsdecls
-from docx.oxml import parse_xml
+from docx.oxml.ns import qn, nsdecls
 from docx.table import _Cell
 
 
