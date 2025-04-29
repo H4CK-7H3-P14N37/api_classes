@@ -18,7 +18,7 @@ from .voodoo import Voodoo
 
 class PinCushionScan:
     def __init__(self, **kwargs):
-        self.interface_name = "eno1"
+        self.interface_name = "eth0"
         self.customer_name = "nocustomer"
         if os.environ.get("CUSTOMER"):
             self.customer_name = os.environ.get("CUSTOMER")
@@ -31,12 +31,12 @@ class PinCushionScan:
             self.base_dir = os.environ.get("BASEDIR")
         elif kwargs.get("BASEDIR"):
             self.base_dir = kwargs.get("BASEDIR")
-        self.masscan_bin = "/data/needlecraft/bin/masscan"
+        self.masscan_bin = "/data/needlecraft/opt/masscan"
         if os.environ.get("MASSCANBIN"):
             self.masscan_bin = os.environ.get("MASSCANBIN")
         elif kwargs.get("MASSCANBIN"):
             self.masscan_bin = kwargs.get("MASSCANBIN")
-        self.nmap_bin = "/data/needlecraft/bin/nmap/bin/nmap"
+        self.nmap_bin = "/data/needlecraft/opt/nmap/bin/nmap"
         if os.environ.get("NMAPBIN"):
             self.nmap_bin = os.environ.get("NMAPBIN")
         elif kwargs.get("NMAPBIN"):
