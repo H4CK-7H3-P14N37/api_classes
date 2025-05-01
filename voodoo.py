@@ -105,7 +105,7 @@ class Voodoo:
 
     def whois_request(self, ipaddr, server, port=43):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.settimeout(2)
+        sock.settimeout(10)
         sock.connect((server, port))
         ###############################################################
         # some whois servers need parameters that not part of the RFC #
