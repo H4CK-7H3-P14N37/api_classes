@@ -816,7 +816,11 @@ class Voodoo:
     def get_cidr_first_ip(self, cidr):
         if self.cidr_check(cidr):
             net_obj = ipaddress.ip_network(cidr, strict=False)
-            first_ip = next(net_obj.hosts())
+            hosts = net_obj.hosts()
+            if isinstance(hosts, list):
+                first_ip = str(hosts[0])
+            elif isinstance(hosts, object):
+                first_ip = str(next(net_obj.hosts()))
             return first_ip
         return
 
@@ -830,7 +834,7 @@ class Voodoo:
                     first_ip = self.get_cidr_first_ip(domain)
                     if first_ip:
                         asn_data = self.get_asn_desc(first_ip)
-                        csv_line = f"{domain}/32,{domain},{asn_data}"
+                        csv_line = f"{domain},{first_ip},{asn_data}"
                         print(csv_line)
                         f.write(f"{csv_line}\n")
                     else:
