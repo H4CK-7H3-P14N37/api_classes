@@ -2,10 +2,12 @@
 import os
 import re
 import csv
-# pip install pandas
-# pip install "pandas[excel]"
+import time
 import shutil
 import random
+import ipaddress
+# pip install pandas
+# pip install "pandas[excel]"
 import pandas
 import netaddr
 import requests
@@ -51,6 +53,13 @@ class Voodoo:
         ip_match = re.compile(
             r'[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$')
         if ip_match.match(ip_addr):
+            return True
+        return False
+    
+    def cidr_check(self, cidr_addr):
+        cidr_match = re.compile(
+            r'[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\/[0-9]{1,3}$')
+        if cidr_match.match(cidr_addr):
             return True
         return False
 
@@ -803,6 +812,13 @@ class Voodoo:
         if asn_dict_list:
             return "|".join([d.get('AS Name').replace(",","") for d in asn_dict_list])
         return
+    
+    def get_cidr_first_ip(self, cidr):
+        if self.cidr_check(cidr):
+            net_obj = ipaddress.ip_network(cidr, strict=False)
+            first_ip = next(net_obj.hosts())
+            return first_ip
+        return
 
     def get_dns_asn(self, dns_filename):
         output_filename = f"{dns_filename}.csv"
@@ -810,16 +826,42 @@ class Voodoo:
             domains = f.read().splitlines()
         with open(output_filename, "w", encoding="utf-8") as f:
             for domain in domains:
-                try:
-                    response = socket.gethostbyname(domain)
-                    asn_data = self.get_asn_desc(response)
-                    csv_line = f"{domain},{response},{asn_data}"
+                if self.cidr_check(domain):
+                    first_ip = self.get_cidr_first_ip(domain)
+                    if first_ip:
+                        asn_data = self.get_asn_desc(first_ip)
+                        csv_line = f"{domain}/32,{domain},{asn_data}"
+                        print(csv_line)
+                        f.write(f"{csv_line}\n")
+                    else:
+                        response = f"{domain},NXDOMAIN,NXASN"
+                        print(response)
+                        f.write(f"{response}\n")
+                elif self.ip_check(domain):
+                    asn_data = self.get_asn_desc(domain)
+                    csv_line = f"{domain}/32,{domain},{asn_data}"
                     print(csv_line)
                     f.write(f"{csv_line}\n")
-                except socket.gaierror:
+                elif self.domain_check(domain):
+                    try:
+                        response = socket.gethostbyname(domain)
+                        asn_data = self.get_asn_desc(response)
+                        csv_line = f"{domain},{response},{asn_data}"
+                        print(csv_line)
+                        f.write(f"{csv_line}\n")
+                    except socket.gaierror:
+                        response = f"{domain},NXDOMAIN,NXASN"
+                        print(response)
+                        f.write(f"{response}\n")
+                    except TimeoutError:
+                        response = f"{domain},Timeout,Timeout"
+                        print(response)
+                        f.write(f"{response}\n")
+                else:
                     response = f"{domain},NXDOMAIN,NXASN"
                     print(response)
                     f.write(f"{response}\n")
+                time.sleep(5)
         return output_filename
 
     def get_dns_asn_list(self, dns_list):
@@ -835,6 +877,11 @@ class Voodoo:
                 response_list.append(
                     (domain,"NXDOMAIN","NXASN")
                 )
+            except TimeoutError:
+                response_list.append(
+                    (domain,"Timeout","Timeout")
+                )
+            time.sleep(5)
         return response_list
 
     def open_excel_file(self, filename):
