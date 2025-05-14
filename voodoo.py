@@ -104,9 +104,13 @@ class Voodoo:
         return ip_list
 
     def whois_request(self, ipaddr, server, port=43):
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.settimeout(10)
-        sock.connect((server, port))
+        try:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(30)
+            sock.connect((server, port))
+        except TimeoutError:
+            time.sleep(5)
+            return self.whois_request(ipaddr, server, port=port)
         ###############################################################
         # some whois servers need parameters that not part of the RFC #
         # de.whois-servers.net = '-T dn,ace domain.com'               #
