@@ -45,9 +45,15 @@ class Voodoo:
             self.google_api_key = os.environ.get("GOOGLEKEY")
         elif kwargs.get("GOOGLEKEY"):
             self.google_api_key = kwargs.get("GOOGLEKEY")
+        self.maxmind_api_key = ""
+        if os.environ.get("MAXMINDKEY"):
+            self.maxmind_api_key = os.environ.get("MAXMINDKEY")
+        elif kwargs.get("MAXMINDKEY"):
+            self.maxmind_api_key = kwargs.get("MAXMINDKEY")
         self.resolver = dns.resolver.Resolver()
         self.resolver.timeout = 0.8
         self.resolver.lifetime = 0.8
+        self.BASE_DIR = os.getcwd()
 
     def ip_check(self, ip_addr):
         ip_match = re.compile(
@@ -1039,6 +1045,80 @@ class Voodoo:
 
     def zip_dir(self, folder_path, output_filename):
         return shutil.make_archive(output_filename, 'zip', folder_path)
+    
+    def download_file(self, url, output_name):
+        local_filename = output_name
+        r = requests.get(url, stream=True, proxies={}, verify=self.cert_validation)
+        with open(local_filename, 'wb') as f:
+            for chunk in r.iter_content(chunk_size=1024):
+                if chunk:
+                    f.write(chunk)
+        return local_filename
+    
+    def dl_geofile(self):
+        filename = self.download_file(
+            f"https://download.maxmind.com/app/geoip_download?edition_id=GeoLite2-ASN-CSV&license_key={self.maxmind_api_key}&suffix=zip",
+            os.path.join(self.BASE_DIR, "GeoLite2-ASN-CSV.zip"),
+        )
+        zip_ref = zipfile.ZipFile(filename, 'r')
+        csv_files = [f for f in zip_ref.namelist() if f.lower().endswith(".csv")]
+        all_files = [f for f in zip_ref.namelist()]
+        zip_ref.extractall(self.BASE_DIR)
+        zip_ref.close()
+        return all_files,csv_files
+    
+    def get_maxmind_asn_data(
+            self,
+            keywords_list=[],
+            exclude_words_list=[]
+        ):
+        try:
+            all_files,csv_files = self.dl_geofile()
+        except:
+            sleep(10)
+            try:
+                all_files,csv_files = self.dl_geofile()
+            except:
+                raise "Failed to Download GeoIPASNum2.zip"
+        asns_list = []
+        for csv_file in csv_files:
+            with open(os.path.join(self.BASE_DIR, csv_file), 'r') as f:
+                reader = csv.reader(f, delimiter=',', quotechar='"', dialect='excel')
+                for row in reader:
+                    if (
+                            [w for w in keywords_list if w.lower() in row[2].lower()] and not
+                            [w for w in exclude_words_list if w.lower() in row[2].lower()]
+                    ):
+                        asns_list.append(row[0])
+        return all_files,asns_list
+    
+    def rm_files(self, files_list):
+        for f in files_list:
+            os.remove(f)
+    
+    def write_json_to_file(self, data, filename):
+        try:
+            with open(filename, "w") as f:
+                json.dump(data, f, indent=4)
+            print(f"[+] Results written to {filename}")
+        except Exception as e:
+            print(f"[ERROR] Could not write to file: {e}")
+
+    def run_maxmind_download(self,
+            filename=None,
+            keywords_list=[],
+            exclude_words_list=[]
+        ):
+        all_files,asns_list = self.get_maxmind_asn_data(
+            keywords_list=keywords_list,
+            exclude_words_list=exclude_words_list
+        )
+        if filename:
+            _ = self.write_json_to_file(asns_list, filename)
+        _ = self.rm_files(all_files)
+        return all_files,asns_list
+
+
 
 
 if __name__ == "__main__":
