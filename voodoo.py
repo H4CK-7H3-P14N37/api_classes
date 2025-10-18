@@ -3,8 +3,10 @@ import os
 import re
 import csv
 import time
+import json
 import shutil
 import random
+import zipfile
 import ipaddress
 # pip install pandas
 # pip install "pandas[excel]"
@@ -1048,7 +1050,7 @@ class Voodoo:
     
     def download_file(self, url, output_name):
         local_filename = output_name
-        r = requests.get(url, stream=True, proxies={}, verify=self.cert_validation)
+        r = requests.get(url, stream=True, proxies={})
         with open(local_filename, 'wb') as f:
             for chunk in r.iter_content(chunk_size=1024):
                 if chunk:
@@ -1075,7 +1077,7 @@ class Voodoo:
         try:
             all_files,csv_files = self.dl_geofile()
         except:
-            sleep(10)
+            time.sleep(10)
             try:
                 all_files,csv_files = self.dl_geofile()
             except:
@@ -1085,10 +1087,11 @@ class Voodoo:
             with open(os.path.join(self.BASE_DIR, csv_file), 'r') as f:
                 reader = csv.reader(f, delimiter=',', quotechar='"', dialect='excel')
                 for row in reader:
-                    if (
-                            [w for w in keywords_list if w.lower() in row[2].lower()] and not
-                            [w for w in exclude_words_list if w.lower() in row[2].lower()]
-                    ):
+                    keyword_match = [w for w in keywords_list if w.lower() in row[2].lower()]
+                    exclude_match = []
+                    if exclude_words_list:
+                        exclude_match = [w for w in exclude_words_list if w.lower() in row[2].lower()]
+                    if keyword_match and not exclude_match:
                         asns_list.append(row[0])
         return all_files,asns_list
     
@@ -1104,7 +1107,8 @@ class Voodoo:
         except Exception as e:
             print(f"[ERROR] Could not write to file: {e}")
 
-    def run_maxmind_download(self,
+    def run_maxmind_download(
+            self,
             filename=None,
             keywords_list=[],
             exclude_words_list=[]
