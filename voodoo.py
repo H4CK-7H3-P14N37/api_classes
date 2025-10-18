@@ -4,6 +4,7 @@ import re
 import csv
 import time
 import json
+import glob
 import shutil
 import random
 import zipfile
@@ -1120,6 +1121,12 @@ class Voodoo:
         if filename:
             _ = self.write_json_to_file(asns_list, filename)
         _ = self.rm_files(all_files)
+        pattern = os.path.join(self.BASE_DIR, "GeoLite2-ASN-CSV_*")
+        for folder in glob.glob(pattern):
+            if os.path.isdir(folder):
+                shutil.rmtree(folder)
+        if os.path.exists("GeoLite2-ASN-CSV.zip"):
+            _ = self.rm_files(["GeoLite2-ASN-CSV.zip"])
         return all_files,asns_list
 
 
