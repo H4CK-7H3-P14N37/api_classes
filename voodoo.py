@@ -81,6 +81,15 @@ class Voodoo:
                 return True
         return False
 
+    def is_public_cidr(self, cidr):
+        net = ipaddress.IPv4Network(cidr, strict=False)
+        private_ranges = [
+            ipaddress.IPv4Network("10.0.0.0/8"),
+            ipaddress.IPv4Network("172.16.0.0/12"),
+            ipaddress.IPv4Network("192.168.0.0/16"),
+        ]
+        return not any(net.overlaps(p) for p in private_ranges)
+
     def cve_check(self, cve_num):
         cve_match = re.compile('^(CVE|cve)-[0-9]{4}-[0-9]{4,10}$')
         if cve_match.match(cve_num):
@@ -328,7 +337,12 @@ class Voodoo:
             "Content-Type": "application/json",
             "APIKEY": self.securitytrails_key
         }
-        if self.ip_check(ip_addr) and not self.private_ip_check(ip_addr):
+        do_the_thang = False
+        if "/" in ip_addr and self.is_public_cidr(ip_addr):
+            do_the_thang = True
+        elif self.ip_check(ip_addr) and not self.private_ip_check(ip_addr):
+            do_the_thang = True
+        if do_the_thang:
             payload = {"filter": {"ipv4": ip_addr}}
             response = requests.post(
                 url,
@@ -348,7 +362,14 @@ class Voodoo:
         if pdns_results:
             records = [d.get("hostname") for d in pdns_results.get("records") if d.get("hostname")]
         return records
-
+    
+    def mass_pdns_lookup(self, ip_list):
+        records = []
+        for cidr in ip_list:
+            pdns_list = self.get_pdns_list(cidr)
+            if pdns_list:
+                records.extend(pdns_list)
+        return records
     
     def pdns_table(self, ip_addr):
         header_name = "Passive DNS"
