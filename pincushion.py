@@ -623,7 +623,7 @@ class PinCushionSSLSCAN:
                 cipher_list = ssl_test_results.get('cipher')
                 if cipher_list:
                     bad_ciphers_list = [
-                        d for d in cipher_list if d and (
+                        d for d in cipher_list if isinstance(d, dict) and (
                             d.get('@strength') != "strong" and d.get('@strength') != "acceptable") or (
                             d.get("@sslversion") != "TLSv1.2" and d.get("@sslversion") != "TLSv1.3")]
                     if bad_ciphers_list:
