@@ -233,7 +233,7 @@ class PinCushionScan:
                     port_data_list.append(
                         f"{ip_addr}:{status}:{proto}:{port_number}:{banner_clean}")
                     _tls_service_names = {'https', 'ssl', 'tls', 'TLS', 'X509', 'x509'}
-                    _web_service_names = _tls_service_names | {'http'}
+                    _web_service_names = _tls_service_names | {'http', 'blackice-icecap'}
                     is_tls = (
                         service_name in _tls_service_names or
                         'tls/' in banner.lower() or
@@ -460,7 +460,7 @@ class PinCushionScan:
                                             service_name = f"{name} {product} {extra_info}".replace(
                                                 ":", " ")
                                             if name in [
-                                                    "http", "https"] and port_number and port_protocol:
+                                                    "http", "https", "blackice-icecap"] and port_number and port_protocol:
                                                 is_tls = (
                                                     name == "https" or
                                                     service.get('@tunnel') == 'ssl'
