@@ -232,11 +232,18 @@ class PinCushionScan:
                 if port_number:
                     port_data_list.append(
                         f"{ip_addr}:{status}:{proto}:{port_number}:{banner_clean}")
-                    if service_name in ('http', 'https'):
+                    _tls_service_names = {'https', 'ssl', 'tls', 'TLS', 'X509', 'x509'}
+                    _web_service_names = _tls_service_names | {'http'}
+                    is_tls = (
+                        service_name in _tls_service_names or
+                        'tls/' in banner.lower() or
+                        banner[:3] == 'MII'
+                    )
+                    is_web = service_name in _web_service_names or banner.startswith('HTTP/') or is_tls
+                    if is_web or is_tls:
+                        scheme = 'https' if is_tls else 'http'
                         http_port_list.append(
-                            f"http://{ip_addr}:{port_number}/")
-                        http_port_list.append(
-                            f"https://{ip_addr}:{port_number}/")
+                            f"{scheme}://{ip_addr}:{port_number}/")
                         if pdns_lookup:
                             pdns_record_list = self.voodoo_obj.get_pdns_list(
                                 ip_addr)
@@ -245,9 +252,7 @@ class PinCushionScan:
                                     pdns_record_list = pdns_record_list[:30]
                                 for dns_name in pdns_record_list:
                                     http_port_list.append(
-                                        f"http://{dns_name}:{port_number}/")
-                                    http_port_list.append(
-                                        f"https://{dns_name}:{port_number}/")
+                                        f"{scheme}://{dns_name}:{port_number}/")
         return port_data_list, http_port_list
 
     def run_nmap_command(self, cmd_str, output_filename):
@@ -456,10 +461,13 @@ class PinCushionScan:
                                                 ":", " ")
                                             if name in [
                                                     "http", "https"] and port_number and port_protocol:
+                                                is_tls = (
+                                                    name == "https" or
+                                                    service.get('@tunnel') == 'ssl'
+                                                )
+                                                scheme = 'https' if is_tls else 'http'
                                                 http_port_list.append(
-                                                    f"http://{ip_addr}:{port_number}/")
-                                                http_port_list.append(
-                                                    f"https://{ip_addr}:{port_number}/")
+                                                    f"{scheme}://{ip_addr}:{port_number}/")
                                                 if pdns_lookup:
                                                     pdns_record_list = self.voodoo_obj.get_pdns_list(
                                                         ip_addr)
@@ -473,9 +481,7 @@ class PinCushionScan:
                                                             pdns_record_list = pdns_record_list[:30]
                                                         for dns_name in pdns_record_list:
                                                             http_port_list.append(
-                                                                f"http://{dns_name}:{port_number}/")
-                                                            http_port_list.append(
-                                                                f"https://{dns_name}:{port_number}/")
+                                                                f"{scheme}://{dns_name}:{port_number}/")
                                         if banner and port_number:
                                             banner = banner.replace(
                                                 "\n", " ").strip()
